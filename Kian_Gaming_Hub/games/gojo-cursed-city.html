@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>GOJO: CURSED CITY</title>
+<style>
+:root{--cyan:#66e7ff;--blue:#268dff;--red:#ff466b;--violet:#bd70ff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070b19;color:white;font-family:system-ui,Segoe UI,Arial,sans-serif;touch-action:none}
+canvas{display:block;width:100%;height:100%;image-rendering:auto}
+#hud{position:fixed;inset:0;pointer-events:none;text-shadow:0 2px 5px #000}
+.panel{background:linear-gradient(135deg,#0c1730dd,#10152ddd);border:1px solid #73dfff66;border-radius:12px;box-shadow:0 0 20px #168bff20;padding:10px 13px}
+#brand{position:absolute;top:12px;left:12px;font-weight:950;letter-spacing:2px;font-size:clamp(14px,2.6vw,23px);color:#eafaff}
+#brand small{display:block;font-size:9px;letter-spacing:4px;color:var(--cyan);font-weight:700}
+#stats{position:absolute;top:12px;right:12px;width:min(235px,48vw);font-size:12px}
+.bar{height:9px;background:#202b43;border-radius:9px;overflow:hidden;margin:4px 0 8px;border:1px solid #ffffff26}
+.fill{height:100%;width:100%;transition:width .12s}
+#hp{background:linear-gradient(90deg,#ff315d,#ff8b7c)}#energy{background:linear-gradient(90deg,#277dff,#69f3ff)}
+#objective{position:absolute;top:118px;left:12px;font-size:11px;max-width:210px;line-height:1.45}
+#message{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);font-weight:1000;text-align:center;font-size:clamp(20px,5vw,48px);letter-spacing:2px;color:white;-webkit-text-stroke:1px #8beaff;text-shadow:0 0 25px #229fff;opacity:0;transition:opacity .2s}
+#hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:10px;color:#d9f7ffbb;text-align:center;white-space:nowrap}
+#abilities{position:absolute;right:12px;bottom:18px;display:grid;grid-template-columns:repeat(3, minmax(55px,72px));gap:7px;pointer-events:auto}
+.ab{color:white;background:linear-gradient(145deg,#152746ee,#101426ee);border:1px solid #74dfff77;border-radius:12px;min-height:57px;padding:6px 3px;font-size:10px;font-weight:800;box-shadow:0 4px 0 #050812;touch-action:manipulation}
+.ab b{display:block;color:var(--cyan);font-size:13px}.ab:active{transform:translateY(3px);box-shadow:0 1px 0 #050812}.ab.red b{color:#ff718b}.ab.purple b{color:#d99cff}
+#movePad{position:absolute;left:16px;bottom:22px;width:142px;height:142px;pointer-events:auto;opacity:.82}
+.padbtn{position:absolute;width:44px;height:44px;border:1px solid #9defff99;background:#102747bb;border-radius:12px;color:white;font-size:18px;touch-action:none}
+#up{top:0;left:49px}#down{bottom:0;left:49px}#left{left:0;top:49px}#right{right:0;top:49px}
+#attack{position:absolute;left:50%;bottom:25px;transform:translateX(-50%);pointer-events:auto;border-radius:50%;width:70px;height:70px;border:2px solid #a5f2ff;background:radial-gradient(circle,#238bffdd,#0a1d3ddd);color:white;font-weight:900;box-shadow:0 0 22px #2c9dff66}
+#start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#152d52ee,#050814f5);z-index:10;padding:20px}
+#start .card{max-width:560px;width:100%;text-align:center;padding:26px;border:1px solid #6bdfff77;border-radius:20px;background:#091326eF;box-shadow:0 0 60px #167dff30}
+h1{font-size:clamp(30px,7vw,58px);line-height:.98;margin:0 0 8px;letter-spacing:2px}h1 span{color:#72e8ff}
+#start p{color:#c4d7f0;line-height:1.55;font-size:14px}
+#play{border:0;border-radius:12px;padding:14px 28px;font-size:16px;font-weight:950;color:#06101e;background:linear-gradient(90deg,#6df1ff,#448fff);box-shadow:0 0 25px #2a9bff55}
+#start .tiny{font-size:11px;color:#91a9c8}
+#bossbox{position:absolute;top:94px;left:50%;transform:translateX(-50%);width:min(330px,65vw);text-align:center;font-size:10px;opacity:0}
+#bossbar{height:8px;background:#3a1228;border:1px solid #ff719a77;border-radius:10px;overflow:hidden;margin-top:4px}#bossfill{height:100%;width:100%;background:linear-gradient(90deg,#ff2f70,#b13cff)}
+@media(max-width:600px){#objective{top:105px;font-size:10px;max-width:150px}#hint{display:none}#abilities{grid-template-columns:repeat(3,56px);right:7px;bottom:9px;gap:5px}.ab{min-height:50px;font-size:9px}#movePad{left:8px;bottom:10px;transform:scale(.83);transform-origin:bottom left}#attack{bottom:22px;width:60px;height:60px}#stats{top:65px}}
+</style></head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+ <div id="brand" class="panel">GOJO: CURSED CITY<small>INFINITY PROTOCOL // 01</small></div>
+ <div id="stats" class="panel">VITALS <span id="hptext" style="float:right">100 / 100</span><div class="bar"><div id="hp" class="fill"></div></div>CURSED ENERGY <span id="etext" style="float:right">100%</span><div class="bar"><div id="energy" class="fill"></div></div><div>ELIMINATIONS: <b id="kills">0</b> &nbsp; SHARDS: <b id="shards">0</b></div></div>
+ <div id="objective" class="panel">MISSION: CLEAR THE CURSED ZONE<br>Defeat curses. Break glowing structures. Survive.</div>
+ <div id="bossbox">SPECIAL GRADE CURSE<div id="bossbar"><div id="bossfill"></div></div></div>
+ <div id="message"></div>
+ <div id="hint">WASD / ARROWS MOVE · MOUSE AIM · CLICK ATTACK · Q TELEPORT · 1–7 CURSED TECHNIQUES</div>
+ <div id="movePad"><button class="padbtn" id="up">▲</button><button class="padbtn" id="left">◀</button><button class="padbtn" id="right">▶</button><button class="padbtn" id="down">▼</button></div>
+ <button id="attack">STRIKE</button>
+ <div id="abilities">
+  <button class="ab" data-skill="1"><b>1 · BLUE</b>Pull</button>
+  <button class="ab red" data-skill="2"><b>2 · RED</b>Blast</button>
+  <button class="ab purple" data-skill="3"><b>3 · PURPLE</b>Void shot</button>
+  <button class="ab" data-skill="4"><b>4 · BLUE MAX</b>Singularity</button>
+  <button class="ab red" data-skill="5"><b>5 · RED MAX</b>Shockwave</button>
+  <button class="ab purple" data-skill="6"><b>6 · NUKE</b>Cataclysm</button>
+  <button class="ab purple" data-skill="7" style="grid-column:span 3"><b>7 · DOMAIN EXPANSION</b>UNLIMITED VOID</button>
+ </div>
+</div>
+<div id="start"><div class="card"><h1>GOJO:<br><span>CURSED CITY</span></h1><p>Enter a neon city overrun by curses. Master Limitless techniques, shatter the environment, and face a Special Grade boss.</p><p><b>PC:</b> WASD move · Mouse aim · Click strike · Q teleport · 1–7 abilities<br><b>Mobile:</b> use the direction pad and skill buttons</p><button id="play">ENTER THE CURSED CITY</button><p class="tiny">Original fan-made browser prototype · No downloads or account needed</p></div></div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+let W=innerWidth,H=innerHeight,dpr=Math.min(devicePixelRatio||1,2);
+function resize(){W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
+const ui=id=>document.getElementById(id);
+let running=false, t=0,last=0,cam={x:0,y:0},keys={},touch={},mouse={x:W/2,y:H/2},player={x:0,y:0,hp:100,en:100,face:0,inv:0,attack:0,tele:0},enemies=[],buildings=[],effects=[],projectiles=[],kills=0,shards=0,boss=null,domain=0,shake=0,spawn=0,world=0;
+const rand=(a,b)=>a+Math.random()*(b-a),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function say(s){ui('message').textContent=s;ui('message').style.opacity=1;clearTimeout(say.timer);say.timer=setTimeout(()=>ui('message').style.opacity=0,1200)}
+function sound(freq=300,dur=.12,type='sawtooth',vol=.04){try{let ac=sound.ac||(sound.ac=new(window.AudioContext||window.webkitAudioContext)()),o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(freq,ac.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(30,freq*.35),ac.currentTime+dur);g.gain.setValueAtTime(vol,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+dur);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+dur)}catch(e){}}
+function init(){
+ player={x:0,y:0,hp:100,en:100,face:0,inv:0,attack:0,tele:0};enemies=[];buildings=[];effects=[];projectiles=[];kills=0;shards=0;boss=null;domain=0;shake=0;spawn=0;
+ for(let i=0;i<90;i++){let x=rand(-1250,1250),y=rand(-950,950);if(Math.hypot(x,y)<180){x+=300}buildings.push({x,y,w:rand(45,100),h:rand(55,155),z:rand(0,1),hp:3,max:3,broken:false,glow:Math.random()<.24})}
+ for(let i=0;i<12;i++)spawnEnemy(rand(-600,600),rand(-500,500));
+}
+function spawnEnemy(x,y,big=false){enemies.push({x,y,hp:big?420:rand(45,75),max:big?420:75,big,spd:big?48:rand(45,68),hit:0,attack:rand(.3,1.4),phase:rand(0,6),r:big?27:15})}
+function screen(p){return{x:W/2+(p.x-cam.x),y:H/2+(p.y-cam.y)}}
+function circle(x,y,r,color,alpha=1){ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+function line(x,y,x2,y2,color,width=2){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.stroke()}
+function polygon(points,color,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=color;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke()}}
+function drawBuilding(b){if(b.broken)return;let p=screen(b),scale=clamp(1-(Math.abs(p.y-H/2)/1800),.65,1.1),w=b.w*scale,h=b.h*scale;
+ if(p.x<-130||p.x>W+130||p.y<-200||p.y>H+200)return;
+ let topY=p.y-h;polygon([{x:p.x-w/2,y:topY},{x:p.x-w/2+13*scale,y:topY-9*scale},{x:p.x+w/2+13*scale,y:topY-9*scale},{x:p.x+w/2,y:topY}],b.glow?'#234e70':'#202d48','#4c7492');
+ polygon([{x:p.x-w/2,y:topY},{x:p.x+w/2,y:topY},{x:p.x+w/2,y:p.y},{x:p.x-w/2,y:p.y}],b.glow?'#173f60':'#111d34','#36516f');
+ polygon([{x:p.x+w/2,y:topY},{x:p.x+w/2+13*scale,y:topY-9*scale},{x:p.x+w/2+13*scale,y:p.y-9*scale},{x:p.x+w/2,y:p.y}], '#0b1427','#2a4766');
+ for(let yy=topY+12;yy<p.y-7;yy+=15)for(let xx=p.x-w/2+7;xx<p.x+w/2-3;xx+=14){ctx.fillStyle=b.glow?'#61eaff99':'#6ba1c744';ctx.fillRect(xx,yy,5*scale,6*scale)}
+ if(b.glow){circle(p.x,p.y-h-7,3,'#65eaff',.8)}
+}
+function drawPlayer(){let p=screen(player),a=player.face;circle(p.x,p.y+6,22,'#010711',.35);
+ // blue aura and silhouette with coat
+ if(player.inv>0||player.tele>0){circle(p.x,p.y,27,'#4bdfff',.13);ctx.beginPath();ctx.arc(p.x,p.y,25+(Math.sin(t*12)*3),0,Math.PI*2);ctx.strokeStyle='#71edff';ctx.lineWidth=2;ctx.stroke()}
+ ctx.save();ctx.translate(p.x,p.y);ctx.rotate(a);
+ polygon([{x:-10,y:-8},{x:0,y:-18},{x:10,y:-8},{x:13,y:18},{x:-13,y:18}], '#e9f7ff','#7bdcff');
+ polygon([{x:-8,y:-2},{x:0,y:8},{x:8,y:-2},{x:7,y:19},{x:-7,y:19}], '#111b37','#344d77');
+ circle(0,-18,8,'#f2d8c9');polygon([{x:-8,y:-21},{x:-4,y:-29},{x:7,y:-26},{x:9,y:-18},{x:2,y:-22}], '#e9faff','#7fe9ff');
+ // blindfold
+ line(-7,-18,7,-18,'#10182a',4);
+ line(0,-2,0,12,'#7bceff',2);ctx.restore();
+ if(player.attack>0){circle(p.x+Math.cos(a)*28,p.y+Math.sin(a)*28,15,'#e7fbff',.4)}
+}
+function drawEnemy(e){let p=screen(e);if(p.x<-70||p.x>W+70||p.y<-90||p.y>H+90)return;
+ circle(p.x,p.y+5,e.r+5,'#020611',.35);circle(p.x,p.y,e.r,e.big?'#4d123f':'#301d48');circle(p.x,p.y-2,e.r*.72,e.big?'#a82d72':'#693a8b');
+ // eyes
+ circle(p.x-5,p.y-3,2.4,'#ff5e8e');circle(p.x+5,p.y-3,2.4,'#ff5e8e');
+ if(e.big){line(p.x-15,p.y-22,p.x-25,p.y-34,'#dc63a6',4);line(p.x+15,p.y-22,p.x+25,p.y-34,'#dc63a6',4)}
+ ctx.fillStyle='#180b1d';ctx.fillRect(p.x-20,p.y-e.r-13,40,4);ctx.fillStyle=e.big?'#ff3f91':'#e95a9a';ctx.fillRect(p.x-20,p.y-e.r-13,40*e.hp/e.max,4);
+}
+function burst(x,y,color,r=35){effects.push({x,y,r,life:.5,max:.5,color});}
+function hitEnemy(e,damage,force=0){e.hp-=damage;e.hit=.18;let dx=e.x-player.x,dy=e.y-player.y,d=Math.hypot(dx,dy)||1;e.x+=dx/d*force;e.y+=dy/d*force;burst(e.x,e.y,'#79edff',e.big?45:23);if(e.hp<=0){kills++;shards+=e.big?50:5;ui('kills').textContent=kills;ui('shards').textContent=shards;if(e.big){boss=null;ui('bossbox').style.opacity=0;say('SPECIAL GRADE EXORCISED!')}enemies=enemies.filter(x=>x!==e);sound(180,.18,'triangle',.07)}}
+function ability(n){
+ if(!running)return;let cost=[0,12,14,22,28,30,55,45][n];if(player.en<cost){say('NOT ENOUGH CURSED ENERGY');return}player.en-=cost;
+ let near=enemies.slice().sort((a,b)=>dist(a,player)-dist(b,player));
+ if(n===1){say('BLUE — CURSE, COME HERE');sound(180,.3,'sine',.07);near.forEach(e=>{if(dist(e,player)<290){let d=dist(e,player)||1;e.x+=(player.x-e.x)/d*90;e.y+=(player.y-e.y)/d*90;hitEnemy(e,18,0)}});burst(player.x,player.y,'#35aaff',105)}
+ if(n===2){say('RED!');sound(500,.22,'sawtooth',.06);near.forEach(e=>{if(dist(e,player)<250)hitEnemy(e,42,105)});burst(player.x+Math.cos(player.face)*75,player.y+Math.sin(player.face)*75,'#ff426d',95);shake=8}
+ if(n===3){say('HOLLOW PURPLE');sound(120,.55,'sawtooth',.08);projectiles.push({x:player.x,y:player.y,vx:Math.cos(player.face)*570,vy:Math.sin(player.face)*570,life:1.6,damage:125,color:'#ce82ff',r:15});burst(player.x,player.y,'#bc73ff',42)}
+ if(n===4){say('MAXIMUM OUTPUT: BLUE');sound(140,.5,'sine',.08);near.forEach(e=>{if(dist(e,player)<380)hitEnemy(e,72,0)});burst(player.x,player.y,'#2a9dff',190);shake=5}
+ if(n===5){say('MAXIMUM OUTPUT: RED');sound(620,.3,'sawtooth',.08);near.forEach(e=>{if(dist(e,player)<420)hitEnemy(e,105,190)});burst(player.x,player.y,'#ff416b',220);shake=12}
+ if(n===6){say('HOLLOW… NUKE!');sound(70,.9,'sawtooth',.1);near.forEach(e=>hitEnemy(e,260,250));buildings.forEach(b=>{if(!b.broken&&Math.hypot(b.x-player.x,b.y-player.y)<480){b.hp=0;b.broken=true;shards+=2}});burst(player.x,player.y,'#d16aff',340);burst(player.x,player.y,'#f6fcff',180);shake=24}
+ if(n===7){say('DOMAIN EXPANSION: UNLIMITED VOID');sound(90,1,'sine',.1);domain=4.5;near.forEach(e=>{if(dist(e,player)<480){hitEnemy(e,e.big?160:999,0);e.attack=99}});burst(player.x,player.y,'#a56bff',440);shake=14}
+}
+function strike(){if(!running||player.attack>.05)return;player.attack=.22;sound(260,.1,'triangle',.04);let hit=enemies.filter(e=>dist(e,player)<75&&Math.abs(Math.atan2(e.y-player.y,e.x-player.x)-player.face)<1.5);hit.forEach(e=>hitEnemy(e,28,35));}
+function teleport(){if(player.en<8)return;player.en-=8;let ox=player.x,oy=player.y;player.x+=Math.cos(player.face)*180;player.y+=Math.sin(player.face)*180;player.inv=.3;player.tele=.2;burst(ox,oy,'#54dfff',42);burst(player.x,player.y,'#54dfff',42);sound(800,.13,'sine',.05)}
+function update(dt){t+=dt;player.en=Math.min(100,player.en+5*dt);player.inv=Math.max(0,player.inv-dt);player.attack=Math.max(0,player.attack-dt);player.tele=Math.max(0,player.tele-dt);domain=Math.max(0,domain-dt);
+ let dx=(keys.d||keys.ArrowRight||touch.right?1:0)-(keys.a||keys.ArrowLeft||touch.left?1:0),dy=(keys.s||keys.ArrowDown||touch.down?1:0)-(keys.w||keys.ArrowUp||touch.up?1:0),len=Math.hypot(dx,dy)||1;
+ player.x+=dx/len*190*dt;player.y+=dy/len*190*dt;
+ if(mouse.active){let sx=W/2+(player.x-cam.x),sy=H/2+(player.y-cam.y);player.face=Math.atan2(mouse.y-sy,mouse.x-sx)}
+ cam.x+=(player.x-cam.x)*Math.min(1,dt*5);cam.y+=(player.y-cam.y)*Math.min(1,dt*5);
+ spawn-=dt;if(spawn<0&&enemies.length<16){spawn=rand(1.4,3);spawnEnemy(player.x+rand(-500,500),player.y+rand(-400,400))}
+ for(const e of [...enemies]){let d=dist(e,player)||1;let a=Math.atan2(player.y-e.y,player.x-e.x);e.phase+=dt*5;if(d>e.r+25){e.x+=Math.cos(a)*e.spd*dt;e.y+=Math.sin(a)*e.spd*dt}e.attack-=dt;if(d<35&&e.attack<=0){e.attack=e.big?0.8:1.1;if(player.inv<=0){player.hp-=e.big?12:7;player.inv=.45;shake=5;sound(100,.1,'square',.04);if(player.hp<=0){player.hp=100;player.en=60;kills=Math.max(0,kills-1);say('YOU WERE CURSED — REFORMING…')}}}}
+ for(const p of [...projectiles]){p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;for(const e of [...enemies])if(Math.hypot(p.x-e.x,p.y-e.y)<e.r+p.r){hitEnemy(e,p.damage,70);p.life=0;break}if(p.life<=0)projectiles=projectiles.filter(q=>q!==p)}
+ for(const ef of [...effects]){ef.life-=dt;ef.r+=90*dt;if(ef.life<=0)effects=effects.filter(x=>x!==ef)}
+ if(!boss&&kills>=8){boss={};spawnEnemy(player.x+rand(-320,320),player.y-300,true);boss=enemies[enemies.length-1];ui('bossbox').style.opacity=1;say('WARNING: SPECIAL GRADE CURSE')}
+ if(boss&&enemies.includes(boss)){ui('bossfill').style.width=(100*boss.hp/boss.max)+'%'}
+ ui('hp').style.width=player.hp+'%';ui('hptext').textContent=Math.ceil(player.hp)+' / 100';ui('energy').style.width=player.en+'%';ui('etext').textContent=Math.floor(player.en)+'%';
+}
+function draw(){ctx.clearRect(0,0,W,H);let grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,'#080e21');grad.addColorStop(1,'#111b31');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+ let sh=shake?rand(-shake,shake):0;ctx.save();ctx.translate(sh,sh*.5);
+ // road grid
+ for(let x=-1600;x<=1600;x+=100){let p=screen({x,y:-1500}),q=screen({x,y:1500});line(p.x,p.y,q.x,q.y,'#23415a33',1)}
+ for(let y=-1500;y<=1500;y+=100){let p=screen({x:-1600,y}),q=screen({x:1600,y});line(p.x,p.y,q.x,q.y,'#23415a33',1)}
+ // street lanes and glowing cracks
+ for(let i=-5;i<=5;i++){let p=screen({x:i*240,y:-1500}),q=screen({x:i*240,y:1500});line(p.x,p.y,q.x,q.y,'#3e6d8a22',2)}
+ buildings.slice().sort((a,b)=>a.y-b.y).forEach(drawBuilding);
+ // ground sigil during domain
+ if(domain>0){let p=screen(player);ctx.beginPath();ctx.arc(p.x,p.y,Math.max(1,(4.5-domain)*100),0,Math.PI*2);ctx.strokeStyle='#c28affaa';ctx.lineWidth=3;ctx.stroke();for(let i=0;i<12;i++){let a=i*Math.PI/6;line(p.x,p.y,p.x+Math.cos(a)*240,p.y+Math.sin(a)*240,'#b884ff44',1)}}
+ enemies.forEach(drawEnemy);
+ for(const p of projectiles){let s=screen(p);circle(s.x,s.y,p.r+10,p.color,.22);circle(s.x,s.y,p.r,p.color);circle(s.x-4,s.y-4,p.r*.35,'#fff')}
+ for(const ef of effects){let p=screen(ef);ctx.beginPath();ctx.arc(p.x,p.y,ef.r*(1-ef.life/ef.max),0,Math.PI*2);ctx.strokeStyle=ef.color;ctx.globalAlpha=ef.life/ef.max;ctx.lineWidth=4;ctx.stroke();ctx.globalAlpha=1}
+ drawPlayer();
+ // floating aim reticle
+ let p=screen(player),ax=p.x+Math.cos(player.face)*58,ay=p.y+Math.sin(player.face)*58;circle(ax,ay,4,'#bffaff',.9);
+ ctx.restore();if(shake>0)shake=Math.max(0,shake-30*(1/60));
+ // subtle scanlines
+ ctx.fillStyle='#8edfff08';for(let y=0;y<H;y+=4)ctx.fillRect(0,y,W,1);
+}
+function loop(now){if(!running)return;let dt=Math.min(.033,(now-last)/1000||.016);last=now;update(dt);draw();requestAnimationFrame(loop)}
+document.getElementById('play').onclick=()=>{ui('start').style.display='none';running=true;init();say('GOJO AWAKENS');last=performance.now();requestAnimationFrame(loop)};
+addEventListener('keydown',e=>{keys[e.key]=true;if(e.key>='1'&&e.key<='7')ability(+e.key);if(e.key.toLowerCase()==='q')teleport();if(e.key===' ')strike()});
+addEventListener('keyup',e=>keys[e.key]=false);
+canvas.addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;mouse.active=true});
+canvas.addEventListener('pointerdown',e=>{mouse.x=e.clientX;mouse.y=e.clientY;mouse.active=true;if(e.pointerType==='mouse')strike()});
+ui('attack').addEventListener('pointerdown',e=>{e.preventDefault();strike()});
+document.querySelectorAll('[data-skill]').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();ability(+b.dataset.skill)}));
+[['up','up'],['down','down'],['left','left'],['right','right']].forEach(([id,k])=>{let b=ui(id);b.addEventListener('pointerdown',e=>{e.preventDefault();touch[k]=true;b.setPointerCapture(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>touch[k]=false))});
+addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault()},{passive:false});
+})();
+</script></body></html>
