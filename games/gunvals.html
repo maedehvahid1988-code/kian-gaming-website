@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GUNVALS: RIVAL ARENA — Upgraded</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080d16;color:#eaf3ff;font-family:Arial,Helvetica,sans-serif}
+button,select,input{font:inherit}button{cursor:pointer;border:1px solid #42607e;background:#15283d;color:#eaf3ff;padding:9px 12px;border-radius:5px}button:hover{background:#204362;border-color:#6dd6ff}button:disabled{opacity:.45;cursor:not-allowed}
+#game{position:absolute;inset:0;width:100%;height:100%;display:block;background:#0b1523}
+#hud{position:absolute;inset:0;pointer-events:none}
+#topbar{position:absolute;left:16px;right:16px;top:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.panel{background:rgba(7,15,27,.91);border:1px solid #35516c;border-radius:8px;padding:12px;box-shadow:0 8px 28px #0008}
+#brand{font-weight:900;letter-spacing:2px;font-size:18px;color:#7fe4ff;text-shadow:0 0 12px #00aaff66}
+#stats{font-size:13px;line-height:1.7;text-align:right}
+#crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:26px;color:#c8f8ff;text-shadow:0 0 7px #00d5ff}
+#bottom{position:absolute;left:16px;right:16px;bottom:14px;display:flex;justify-content:space-between;align-items:end;gap:10px}
+#weaponInfo{min-width:190px;font-size:13px;line-height:1.7}
+#notice{position:absolute;left:50%;top:18%;transform:translateX(-50%);padding:10px 16px;background:#07111ee8;border:1px solid #51cfff;border-radius:6px;font-weight:bold;display:none;white-space:nowrap}
+#menu{position:absolute;inset:0;background:linear-gradient(135deg,#08111eee,#0b1c2bee);display:flex;align-items:center;justify-content:center;overflow:auto}
+#menuCard{width:min(1000px,94vw);max-height:94vh;overflow:auto;border:1px solid #3a6987;border-radius:12px;background:#0b1726f5;padding:22px;box-shadow:0 20px 70px #000b}
+h1{margin:0 0 5px;font-size:clamp(25px,4vw,44px);letter-spacing:2px;color:#8deaff}
+.sub{color:#a9c4d9;margin-bottom:18px}
+.menuGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tile{border:1px solid #294760;background:#101f30;border-radius:8px;padding:13px}
+.tile h3{margin:0 0 8px;color:#8deaff;font-size:15px}
+.tile p{font-size:12px;line-height:1.5;color:#bdd0df}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.row label{font-size:13px;color:#bed5e6}
+select,input[type=text],input[type=number]{background:#07111c;color:#eaf3ff;border:1px solid #35516c;border-radius:4px;padding:8px;max-width:100%}
+#menuStatus{font-size:12px;color:#91b1c8;margin-top:12px;line-height:1.5}
+#adminBtn{pointer-events:auto;background:#087a44;border-color:#26ff9b;font-weight:bold}
+#adminPanel{position:absolute;right:16px;top:62px;width:min(330px,92vw);display:none;pointer-events:auto}
+#adminPanel h3{margin:0 0 8px;color:#6effae}
+#adminPanel .row button{flex:1}
+#adminLog{font-size:11px;color:#a6c6b6;max-height:90px;overflow:auto;white-space:pre-wrap}
+#quickBtns{pointer-events:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#quickBtns button{font-size:12px;padding:7px 9px}
+#toast{position:absolute;bottom:95px;left:50%;transform:translateX(-50%);background:#06111eeF;border:1px solid #54cfff;padding:8px 13px;border-radius:5px;display:none;pointer-events:none}
+#musicFile{display:none}
+.small{font-size:11px;color:#9eb7ca}
+@media(max-width:760px){.menuGrid{grid-template-columns:1fr 1fr}#topbar{left:8px;right:8px;top:8px}#bottom{left:8px;right:8px;bottom:8px}#brand{font-size:14px}.panel{padding:8px}}
+@media(max-width:520px){.menuGrid{grid-template-columns:1fr}#stats{font-size:11px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+ <div id="topbar">
+  <div class="panel"><div id="brand">GUNVALS: RIVAL ARENA</div><div class="small">UPGRADED MAIN BUILD • OFFLINE PRACTICE</div></div>
+  <div class="panel" id="stats">COINS <b id="coins">2500</b><br>MODE <b id="modeLabel">LOBBY</b><br><span id="scoreLabel">WINS 0 · KILLS 0</span></div>
+ </div>
+ <div id="crosshair">+</div>
+ <div id="bottom">
+  <div class="panel" id="weaponInfo">WEAPON <b id="weaponName">Rival Rifle</b><br>AMMO <b id="ammo">30 / ∞</b><br>HEALTH <b id="health">100</b></div>
+  <div id="quickBtns">
+   <button id="cameraBtn">CAMERA: FIRST</button><button id="outfitBtn">OUTFIT</button><button id="shopBtn">SHOP</button><button id="musicBtn">♫ LOBBY MUSIC</button><button id="adminBtn">KIANADMIN</button><button id="menuBtn">MENU</button>
+  </div>
+ </div>
+ <div id="notice"></div><div id="toast"></div>
+ <div id="adminPanel" class="panel">
+  <h3>⚡ KIANADMIN CONTROL</h3>
+  <div class="small">Local practice admin controls</div>
+  <div class="row"><button data-cmd="heal">Heal</button><button data-cmd="coins">+5000 Coins</button></div>
+  <div class="row"><button data-cmd="fly">Fly: toggle</button><button data-cmd="clear">Clear bots</button></div>
+  <div class="row"><button data-cmd="kian">KIANGUN · ADMIN EQUIP</button><button data-cmd="spawn">Spawn bot</button></div>
+  <div class="row"><button data-cmd="win">Win round</button><button data-cmd="close">Close</button></div>
+  <div class="row"><input id="adminCommand" type="text" placeholder="Command: /help" style="width:100%"><button id="runCommand">Run</button></div>
+  <div id="adminLog">Admin panel ready.</div>
+ </div>
+</div>
+<div id="menu">
+ <div id="menuCard">
+  <h1>GUNVALS: RIVAL ARENA</h1><div class="sub">Main upgraded build · blocky arena shooter · Windows 7 friendly · no install required</div>
+  <div class="menuGrid">
+   <div class="tile"><h3>PLAY ARENA</h3><p>Fight bots, earn coins, switch weapons, and test your loadout in an offline practice match.</p><div class="row"><label for="modeSelect">Mode</label><select id="modeSelect"><option>Team Duel</option><option>Free For All</option><option>Gun Game</option><option>Boss Battle</option><option>Practice Range</option></select></div><button id="playBtn">START MATCH</button> <button id="lobbyBtn">RETURN TO LOBBY</button></div>
+   <div class="tile"><h3>LOADOUT & STYLE</h3><p>Choose outfits and weapons. Cosmetics visibly change your avatar in third-person and in the lobby.</p><div class="row"><button id="menuOutfit">Change Outfit</button><button id="menuShop">Open Shop</button></div><div class="row"><button id="equipPrimary">Equip Rival Rifle</button><button id="equipMelee">Equip Block Blade</button></div><div class="small">Kian Gun shop price: 999,999,999 coins.</div></div>
+   <div class="tile"><h3>LOBBY MUSIC</h3><p>Press play for the built-in original phonk-style loop, or load your own local PASSO BEM SOLTO audio file.</p><div class="row"><button id="menuMusic">Play Lobby Beat</button><button id="loadMusic">Choose PASSO BEM SOLTO file</button><input id="musicFile" type="file" accept="audio/*"></div><div class="small" id="musicStatus">Built-in original loop ready. Local audio files are not included.</div></div>
+   <div class="tile"><h3>WEAPON SHOP</h3><p>Buy weapons, skins, wraps, charms and emotes with earned coins. Kian Gun remains extremely expensive in the main build.</p><button id="shopOpen2">OPEN FULL SHOP</button></div>
+   <div class="tile"><h3>CONTROLS</h3><p><b>WASD</b> move · <b>Mouse</b> aim · <b>Click</b> shoot · <b>R</b> reload · <b>1–4</b> switch weapons · <b>V</b> camera · <b>Space</b> jump · <b>Shift</b> sprint · <b>Esc</b> menu</p></div>
+   <div class="tile"><h3>ABOUT THIS BUILD</h3><p>This is a self-contained playable prototype. It uses original blocky visuals and local bot combat. Online multiplayer and exact Roblox RIVALS assets are not included.</p><p class="small">No May 23 birthday event or free Kian Gun giveaway in this build.</p></div>
+  </div>
+  <div id="menuStatus">Ready. Click START MATCH to play. Your browser may ask permission to use the mouse pointer.</div>
+ </div>
+</div>
+<div id="shopModal" class="panel" style="display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(570px,94vw);max-height:82vh;overflow:auto;pointer-events:auto">
+ <h2 style="margin:0 0 5px;color:#8deaff">ARENA SHOP</h2><div class="small">Coins: <b id="shopCoins">2500</b></div><div id="shopItems"></div><div class="row"><button id="shopClose">Close Shop</button></div>
+</div>
+<script>
+(function(){
+"use strict";
+var canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+var W=innerWidth,H=innerHeight,dpr=Math.min(window.devicePixelRatio||1,1.5);
+function resize(){W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);}
+addEventListener('resize',resize);resize();
+var $=function(id){return document.getElementById(id)};
+var state={screen:'lobby',mode:'Team Duel',coins:2500,kills:0,wins:0,health:100,ammo:30,mag:30,weapon:'Rival Rifle',camera:1,outfit:0,skin:0,wrap:0,charm:0,emotes:[],fly:false,admin:false,roundKills:0,roundTime:0,player:{x:0,y:0,z:0,yaw:0,pitch:0},bots:[],bullets:[],particles:[],last:0,mouseDown:false,jump:0,score:0};
+var weapons=[
+{name:'Rival Rifle',cost:0,damage:25,rate:180,ammo:30,color:'#67e6ff',kind:'rifle'},
+{name:'Burst SMG',cost:800,damage:12,rate:90,ammo:36,color:'#8affb6',kind:'smg'},
+{name:'Longshot',cost:1400,damage:70,rate:700,ammo:5,color:'#ffcc75',kind:'sniper'},
+{name:'Block Blade',cost:400,damage:50,rate:450,ammo:0,color:'#f18aff',kind:'melee'},
+{name:'Rocket Utility',cost:2200,damage:90,rate:900,ammo:4,color:'#ff785e',kind:'rocket'},
+{name:'Kian Gun',cost:999999999,damage:100,rate:65,ammo:999,color:'#ffed66',kind:'kian'}
+];
+var outfits=[{name:'Classic Blue',body:'#2586d9',legs:'#163d71',head:'#f1c9a1'},{name:'Crimson Rival',body:'#db3c51',legs:'#5c1725',head:'#f0c49b'},{name:'Neon Phantom',body:'#8b5cf6',legs:'#2b175f',head:'#b9f6ff'},{name:'Gold Champion',body:'#f3b72d',legs:'#775116',head:'#f0c49b'},{name:'Shadow Ops',body:'#414b59',legs:'#171e29',head:'#c7a98d'}];
+var keys={},lastShot=0,audioCtx=null,beatTimer=null,musicOn=false,loadedAudio=null,flyY=0;
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function rand(a,b){return a+Math.random()*(b-a)}
+function toast(s){$('toast').textContent=s;$('toast').style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){$('toast').style.display='none'},1900)}
+function notice(s){$('notice').textContent=s;$('notice').style.display='block';clearTimeout(notice.t);notice.t=setTimeout(function(){$('notice').style.display='none'},1600)}
+function updateHUD(){ $('coins').textContent=state.coins.toLocaleString();$('modeLabel').textContent=state.screen==='lobby'?'LOBBY':state.mode.toUpperCase();$('scoreLabel').textContent='WINS '+state.wins+' · KILLS '+state.kills;$('weaponName').textContent=state.weapon;$('ammo').textContent=state.weapon==='Block Blade'?'MELEE':state.ammo+' / ∞';$('health').textContent=state.health;$('cameraBtn').textContent='CAMERA: '+(state.camera?'FIRST':'THIRD');$('shopCoins').textContent=state.coins.toLocaleString();}
+function currentWeapon(){for(var i=0;i<weapons.length;i++)if(weapons[i].name===state.weapon)return weapons[i];return weapons[0]}
+function botSpawn(){var a=rand(-18,18),b=rand(9,34);state.bots.push({x:a,z:b,y:0,hp:100,max:100,yaw:rand(-Math.PI,Math.PI),speed:rand(1.0,2.0),fire:rand(1,3),color:['#ff5e7a','#ffb84d','#b18cff','#65f2b0'][Math.floor(rand(0,4))],name:['BOT_RUSH','BLOCK_ACE','NEON_BOT','RIVAL_07'][Math.floor(rand(0,4))],alive:true,attack:0});}
+function startMatch(){state.screen='match';state.mode=$('modeSelect').value;state.health=100;state.ammo=currentWeapon().ammo||30;state.roundKills=0;state.roundTime=0;state.bots=[];state.bullets=[];state.player.x=0;state.player.z=0;for(var i=0;i<(state.mode==='Boss Battle'?1:6);i++){botSpawn();if(state.mode==='Boss Battle'){state.bots[i].hp=500;state.bots[i].max=500;state.bots[i].color='#ff315d';state.bots[i].name='ARENA BOSS';state.bots[i].speed=.65;}}$('menu').style.display='none';$('shopModal').style.display='none';updateHUD();toast('MATCH STARTED · '+state.mode.toUpperCase());}
+function lobby(){state.screen='lobby';$('menu').style.display='flex';$('menuStatus').textContent='Back in the lobby. Choose a mode, customize your avatar, or visit the shop.';updateHUD();}
+function openShop(){var box=$('shopItems');box.innerHTML='';var all=weapons.concat([{name:'Skyline Wrap',cost:350,type:'wrap'},{name:'Pixel Charm',cost:250,type:'charm'},{name:'Victory Emote',cost:300,type:'emote'},{name:'Neon Trail',cost:500,type:'skin'}]);all.forEach(function(it){var row=document.createElement('div');row.className='row';row.style.borderBottom='1px solid #284158';row.style.padding='7px 0';var info=document.createElement('div');info.style.flex='1';info.innerHTML='<b>'+it.name+'</b><div class="small">'+(it.damage?'Damage '+it.damage+' · '+(it.kind||'weapon'):'Cosmetic item')+'</div>';var btn=document.createElement('button');btn.textContent=state.coins>=it.cost?'Buy · '+it.cost.toLocaleString():'Need '+it.cost.toLocaleString();btn.onclick=function(){if(state.coins<it.cost){toast('Not enough coins!');return;}if(it.name==='Kian Gun'&&state.coins<999999999){toast('Kian Gun costs 999,999,999 coins.');return;}state.coins-=it.cost;if(it.damage){state.weapon=it.name;state.ammo=it.ammo||30;toast('Equipped '+it.name);}else if(it.type==='wrap'){state.wrap=1;toast('Skyline Wrap equipped!');}else if(it.type==='charm'){state.charm=1;toast('Pixel Charm equipped!');}else if(it.type==='emote'){state.emotes.push(it.name);toast('Victory Emote unlocked! Press E to celebrate.');}else{state.skin=1;toast('Neon Trail equipped!');}updateHUD();openShop();};row.appendChild(info);row.appendChild(btn);box.appendChild(row);});$('shopModal').style.display='block';updateHUD();}
+function changeOutfit(){state.outfit=(state.outfit+1)%outfits.length;toast('Outfit changed: '+outfits[state.outfit].name);updateHUD();}
+function adminLog(s){$('adminLog').textContent=s+'\\n'+$('adminLog').textContent}
+function toggleAdmin(){state.admin=!state.admin;$('adminPanel').style.display=state.admin?'block':'none';if(state.admin)adminLog('Admin controls opened.');}
+function adminAction(cmd){if(cmd==='heal'){state.health=100;toast('Admin: health restored');}
+else if(cmd==='coins'){state.coins+=5000;toast('Admin: +5000 coins');}
+else if(cmd==='fly'){state.fly=!state.fly;toast('Fly '+(state.fly?'enabled':'disabled'));}
+else if(cmd==='clear'){state.bots=[];toast('All bots cleared');}
+else if(cmd==='kian'){state.weapon='Kian Gun';state.ammo=999;toast('Admin equip: Kian Gun');}
+else if(cmd==='spawn'){botSpawn();toast('Bot spawned');}
+else if(cmd==='win'){state.wins++;state.coins+=1000;lobby();toast('Admin: round win granted');}
+else if(cmd==='close'){state.admin=false;$('adminPanel').style.display='none';}
+updateHUD();adminLog('> '+cmd+' — OK');}
+function runCommand(){var c=$('adminCommand').value.trim().toLowerCase().replace(/^\//,'');$('adminCommand').value='';if(c==='help'){adminLog('Commands: help, heal, coins, fly, clear, kian, spawn, win');return;}if(['heal','coins','fly','clear','kian','spawn','win'].indexOf(c)>=0)adminAction(c);else adminLog('Unknown command: '+c);}
+function startMusic(){if(loadedAudio){loadedAudio.loop=true;loadedAudio.play().then(function(){musicOn=true;$('musicStatus').textContent='Playing your local PASSO BEM SOLTO audio file.';toast('Lobby music playing');}).catch(function(){toast('Click again to allow audio playback')});return;}
+try{var AC=window.AudioContext||window.webkitAudioContext;if(!AC){toast('Audio is not supported by this browser');return;}if(!audioCtx)audioCtx=new AC();if(audioCtx.state==='suspended')audioCtx.resume();if(musicOn){stopMusic();return;}musicOn=true;var bpm=126,step=0;function note(freq,dur,type,vol,when){var o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(freq,when);g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(vol,when+.008);g.gain.exponentialRampToValueAtTime(.0001,when+dur);o.connect(g);g.connect(audioCtx.destination);o.start(when);o.stop(when+dur+.02);}
+function tick(){if(!musicOn)return;var t=audioCtx.currentTime;var s=step%16;if(s%4===0)note(55,.16,'sine',.38,t);if(s%4===2)note(160,.07,'triangle',.10,t);if(s===4||s===12)note(180,.08,'square',.035,t);var bass=[55,55,65.4,55,49,49,73.4,65.4][Math.floor(s/2)];note(bass,.12,'sawtooth',.07,t);if(s%2===1)note([220,261.6,196,233][Math.floor(s/4)],.07,'triangle',.025,t);step++;beatTimer=setTimeout(tick,60000/bpm/4);}tick();$('musicStatus').textContent='Playing built-in original phonk-style loop.';toast('Lobby beat playing');}catch(e){toast('Could not start audio in this browser');}}
+function stopMusic(){musicOn=false;if(beatTimer)clearTimeout(beatTimer);if(loadedAudio)loadedAudio.pause();toast('Lobby music stopped');}
+function drawBlock(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h);ctx.fillStyle='rgba(255,255,255,.13)';ctx.fillRect(x,y,w,Math.max(2,h*.08));ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(x+w*.78,y,w*.22,h);}
+function project(x,z,y){var depth=Math.max(2,z+7),scale=H/(depth*1.15);return {x:W/2+x*scale,y:H*.49+(state.camera?0:65)+y*scale,scale:scale};}
+function drawWorld(){var grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,'#0b1b30');grad.addColorStop(.55,'#1b3a50');grad.addColorStop(1,'#101a2b');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#263a4c';ctx.beginPath();ctx.moveTo(0,H*.49);ctx.lineTo(W,H*.49);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+var horizon=H*.49;ctx.strokeStyle='#31576b';ctx.lineWidth=1;for(var i=-12;i<=12;i++){ctx.beginPath();ctx.moveTo(W/2+i*25,horizon);ctx.lineTo(W/2+i*W/9,H);ctx.stroke();}for(var j=1;j<13;j++){var yy=horizon+(H-horizon)*j*j/144;ctx.beginPath();ctx.moveTo(0,yy);ctx.lineTo(W,yy);ctx.stroke();}
+for(var k=0;k<16;k++){var side=k%2?1:-1,z=8+k*2.5,p=project(side*(13+(k%3)*2),z,0),w=p.scale*2.5,h=p.scale*(2+(k%4));ctx.fillStyle=k%3?'#182c40':'#23485b';ctx.fillRect(p.x-w/2,p.y-h,w,h);ctx.fillStyle='#39b8d5';for(var q=0;q<3;q++)ctx.fillRect(p.x-w/2+q*w/4,p.y-h+q%2*5,Math.max(2,w*.06),Math.max(2,h*.05));}
+var sorted=state.bots.slice().sort(function(a,b){return b.z-a.z});sorted.forEach(drawBot);
+if(state.screen==='match'&&state.camera===0)drawPlayerThird();
+if(state.screen==='match'&&state.camera===1)drawGun();
+state.particles.forEach(function(p){var pr=project(p.x,p.z,p.y);ctx.fillStyle=p.color;ctx.globalAlpha=clamp(p.life,0,1);ctx.fillRect(pr.x,pr.y,Math.max(2,pr.scale*.15),Math.max(2,pr.scale*.15));ctx.globalAlpha=1;});
+}
+function drawBot(b){if(!b.alive)return;var p=project(b.x-state.player.x,b.z-state.player.z,0),s=clamp(p.scale,2,85);if(p.y>H+100||p.y<0)return;var bw=s*.58,bh=s*1.25;ctx.fillStyle='#0005';ctx.fillRect(p.x-bw*.65,p.y-bh*.04,bw*1.3,Math.max(2,s*.12));drawBlock(p.x-bw/2,p.y-bh*.62,bw,bh*.43,b.color);drawBlock(p.x-bw*.36,p.y-bh*.97,bw*.72,bh*.31,'#e8c09b');drawBlock(p.x-bw*.9,p.y-bh*.6,bw*.34,bh*.39,b.color);drawBlock(p.x+bw*.56,p.y-bh*.6,bw*.34,bh*.39,b.color);drawBlock(p.x-bw*.4,p.y-bh*.2,bw*.32,bh*.3,'#253e66');drawBlock(p.x+bw*.08,p.y-bh*.2,bw*.32,bh*.3,'#253e66');drawBlock(p.x+bw*.18,p.y-bh*.55,bw*.65,bh*.09,'#1b1b25');ctx.fillStyle='#fff';ctx.fillRect(p.x-bw*.2,p.y-bh*.86,bw*.1,Math.max(2,s*.045));ctx.fillRect(p.x+bw*.08,p.y-bh*.86,bw*.1,Math.max(2,s*.045));var hp=b.hp/b.max;ctx.fillStyle='#25151d';ctx.fillRect(p.x-bw/2,p.y-bh*1.13,bw,Math.max(2,s*.07));ctx.fillStyle=hp>.4?'#6effa6':'#ff536e';ctx.fillRect(p.x-bw/2,p.y-bh*1.13,bw*hp,Math.max(2,s*.07));if(s>13){ctx.font='bold '+Math.max(9,s*.16)+'px Arial';ctx.textAlign='center';ctx.fillStyle='#eaf7ff';ctx.fillText(b.name,p.x,p.y-bh*1.2);}}
+function drawPlayerThird(){var o=outfits[state.outfit],x=W*.5,y=H*.72,s=Math.min(W,H)*.14;drawBlock(x-s*.28,y-s*.8,s*.56,s*.48,o.body);drawBlock(x-s*.2,y-s*1.13,s*.4,s*.3,o.head);drawBlock(x-s*.23,y-s*.3,s*.18,s*.32,o.legs);drawBlock(x+s*.05,y-s*.3,s*.18,s*.32,o.legs);drawBlock(x+s*.2,y-s*.74,s*.13,s*.38,o.body);drawBlock(x+s*.24,y-s*.68,s*.55,s*.08,'#202b37');if(state.charm){ctx.fillStyle='#ffe86b';ctx.fillRect(x+s*.1,y-s*.42,s*.1,s*.1);}}
+function drawGun(){var o=currentWeapon(),x=W*.72,y=H*.88;ctx.save();ctx.translate(x,y);ctx.rotate(-.1);ctx.fillStyle='#192b3a';ctx.fillRect(-20,-15,110,55);ctx.fillStyle=o.color;ctx.fillRect(0,-25,125,22);ctx.fillStyle='#5b7385';ctx.fillRect(80,-19,100,10);ctx.fillStyle='#0b121a';ctx.fillRect(12,0,25,40);if(state.weapon==='Block Blade'){ctx.fillStyle=o.color;ctx.beginPath();ctx.moveTo(35,-30);ctx.lineTo(130,-100);ctx.lineTo(145,-88);ctx.lineTo(48,-18);ctx.fill();}ctx.restore();}
+function shoot(){if(state.screen!=='match')return;var w=currentWeapon(),now=Date.now();if(now-lastShot<w.rate)return;lastShot=now;if(w.kind==='melee'){var target=nearestBot();if(target&&distBot(target)<7)damageBot(target,w.damage);else toast('Blade swing');return;}if(state.ammo<=0){toast('Press R to reload');return;}state.ammo--;var target=nearestBot();if(target){var hit=distBot(target)<30&&Math.random()>(w.kind==='sniper'?.02:.18);if(hit)damageBot(target,w.damage);}for(var i=0;i<5;i++)state.particles.push({x:rand(-.6,.6),z:rand(5,14),y:rand(-.2,.6),life:1,color:w.color});updateHUD();}
+function nearestBot(){var alive=state.bots.filter(function(b){return b.alive});if(!alive.length)return null;alive.sort(function(a,b){return distBot(a)-distBot(b)});return alive[0]}
+function distBot(b){return Math.sqrt(Math.pow(b.x-state.player.x,2)+Math.pow(b.z-state.player.z,2))}
+function damageBot(b,d){b.hp-=d;for(var i=0;i<7;i++)state.particles.push({x:b.x+rand(-1,1),z:b.z+rand(-1,1),y:rand(0,2),life:1,color:b.color});if(b.hp<=0){b.alive=false;state.kills++;state.roundKills++;state.coins+=100;toast('BOT ELIMINATED · +100 COINS');if(state.mode==='Gun Game'){var idx=weapons.findIndex(function(w){return w.name===state.weapon});state.weapon=weapons[(idx+1)%4].name;state.ammo=currentWeapon().ammo||30;}if(state.bots.every(function(x){return !x.alive})){if(state.mode!=='Practice Range'){state.wins++;state.coins+=500;notice('ROUND WON · +500 COINS');}setTimeout(function(){if(state.screen==='match')startMatch()},1500);}updateHUD();}}
+function update(dt){if(state.screen!=='match')return;state.roundTime+=dt;var p=state.player,speed=(keys.Shift?10:6)*dt;if(keys.KeyW)p.z+=speed;if(keys.KeyS)p.z-=speed;if(keys.KeyA)p.x-=speed;if(keys.KeyD)p.x+=speed;p.x=clamp(p.x,-20,20);p.z=clamp(p.z,-8,12);if(keys.Space&&state.jump<=0)state.jump=.35;if(state.jump>0)state.jump-=dt;if(state.fly&&keys.Space)p.z+=speed*1.2;
+state.bots.forEach(function(b){if(!b.alive)return;var dx=p.x-b.x,dz=p.z-b.z,dist=Math.sqrt(dx*dx+dz*dz)||1;b.yaw=Math.atan2(dx,dz);if(dist>5){b.x+=dx/dist*b.speed*dt;b.z+=dz/dist*b.speed*dt;}b.fire-=dt;if(b.fire<=0&&dist<22){b.fire=rand(1.3,2.5);if(Math.random()<.25){state.health-=8;toast('BOT HIT YOU · -8 HP');if(state.health<=0){state.health=100;state.coins=Math.max(0,state.coins-100);p.x=0;p.z=0;notice('YOU WERE ELIMINATED · -100 COINS');}updateHUD();}}});
+state.particles.forEach(function(q){q.life-=dt*1.7;q.x+=rand(-.05,.05);});state.particles=state.particles.filter(function(q){return q.life>0;});if(state.mouseDown)shoot();}
+function draw(){ctx.clearRect(0,0,W,H);drawWorld();requestAnimationFrame(draw);}
+function frame(t){var dt=Math.min(.05,(t-(state.last||t))/1000);state.last=t;update(dt);requestAnimationFrame(frame);}
+canvas.addEventListener('click',function(){if(state.screen==='match'&&document.pointerLockElement!==canvas&&canvas.requestPointerLock)canvas.requestPointerLock();shoot();});
+document.addEventListener('pointerlockchange',function(){});
+document.addEventListener('mousemove',function(e){if(state.screen==='match'){state.player.yaw+=e.movementX*.002;state.player.pitch=clamp(state.player.pitch+e.movementY*.002,-.6,.6);}});
+document.addEventListener('keydown',function(e){keys[e.code]=true;if(e.code==='Escape'){if(state.screen==='match')lobby();else if(state.admin)toggleAdmin();}if(e.repeat)return;
+if(e.code==='KeyR'){state.ammo=currentWeapon().ammo||30;toast('Reloaded');updateHUD();}
+if(e.code==='KeyV'){state.camera=1-state.camera;updateHUD();toast(state.camera?'First-person camera':'Third-person camera');}
+if(e.code==='Digit1'){state.weapon='Rival Rifle';state.ammo=30;updateHUD();}if(e.code==='Digit2'){state.weapon='Burst SMG';state.ammo=36;updateHUD();}if(e.code==='Digit3'){state.weapon='Longshot';state.ammo=5;updateHUD();}if(e.code==='Digit4'){state.weapon='Block Blade';state.ammo=0;updateHUD();}
+if(e.code==='KeyE'&&state.emotes.length)toast('EMOTE: '+state.emotes[0]+' ✨');if(e.code==='Space')e.preventDefault();
+});
+document.addEventListener('keyup',function(e){keys[e.code]=false;});
+canvas.addEventListener('mousedown',function(e){if(e.button===0)state.mouseDown=true;});document.addEventListener('mouseup',function(){state.mouseDown=false;});
+$('playBtn').onclick=startMatch;$('lobbyBtn').onclick=lobby;$('menuBtn').onclick=lobby;$('cameraBtn').onclick=function(){state.camera=1-state.camera;updateHUD();toast(state.camera?'First-person camera':'Third-person camera');};
+$('outfitBtn').onclick=changeOutfit;$('menuOutfit').onclick=changeOutfit;$('shopBtn').onclick=openShop;$('menuShop').onclick=openShop;$('shopOpen2').onclick=openShop;$('shopClose').onclick=function(){$('shopModal').style.display='none';};
+$('adminBtn').onclick=toggleAdmin;Array.prototype.forEach.call(document.querySelectorAll('[data-cmd]'),function(b){b.onclick=function(){adminAction(b.getAttribute('data-cmd'));}});$('runCommand').onclick=runCommand;$('adminCommand').addEventListener('keydown',function(e){if(e.key==='Enter')runCommand();});
+$('musicBtn').onclick=startMusic;$('menuMusic').onclick=startMusic;$('loadMusic').onclick=function(){$('musicFile').click();};$('musicFile').onchange=function(){var f=this.files&&this.files[0];if(!f)return;if(loadedAudio){loadedAudio.pause();}loadedAudio=new Audio(URL.createObjectURL(f));loadedAudio.loop=true;$('musicStatus').textContent='Loaded: '+f.name+' — press Play Lobby Beat.';toast('Audio file loaded');};
+$('equipPrimary').onclick=function(){state.weapon='Rival Rifle';state.ammo=30;updateHUD();toast('Rival Rifle equipped');};$('equipMelee').onclick=function(){state.weapon='Block Blade';state.ammo=0;updateHUD();toast('Block Blade equipped');};
+updateHUD();draw();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
